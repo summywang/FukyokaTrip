@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>九州春節親子行程 2/5–2/9</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--ink:#1f2633;--mute:#7b8494;--line:#e6e9ef;--blue:#2f6fe4;--red:#e0353c;--alt:#ff8a1f;--rain:#3a8fd6}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;-webkit-text-size-adjust:100%}
+body{display:flex;flex-direction:column;overflow:hidden}
+header{background:#fff;border-bottom:1px solid var(--line);padding:14px 0 0;flex:0 0 auto}
+h1{font-size:17px;margin:0 16px 10px}
+.tabs{display:flex;gap:4px;padding:0 10px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;border:none;background:none;padding:8px 10px 10px;font-size:15px;color:var(--mute);cursor:pointer;border-bottom:3px solid transparent;font-weight:600}
+.tab small{display:block;font-size:11px;font-weight:400;margin-top:1px}
+.tab.on{color:var(--ink);border-bottom-color:var(--ink)}
+.pager{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.pager::-webkit-scrollbar{display:none}
+.page{flex:0 0 100%;scroll-snap-align:start;overflow-y:auto;padding:16px 0 60px}
+.dhead{padding:0 16px 6px}
+.date{font-size:26px;font-weight:700;letter-spacing:.5px}
+.date span{font-size:18px;margin-left:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.legend{display:flex;gap:10px;font-size:11.5px;color:var(--mute);padding:6px 16px 4px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:1px}
+.slot{position:relative;padding:12px 0 4px 0}
+.slot::before{content:"";position:absolute;left:27px;top:0;bottom:0;border-left:2px dashed #cfd5df}
+.slot:first-of-type::before{top:24px}
+.time{position:relative;display:flex;align-items:center;gap:8px;padding:0 16px 8px}
+.num{position:relative;z-index:1;flex:0 0 24px;height:24px;border-radius:6px;background:var(--red);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.tt{font-size:14px;font-weight:700;color:var(--red)}
+.row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-left:46px;padding:0 16px 6px 46px;scrollbar-width:none}
+.row::-webkit-scrollbar{display:none}
+.card{position:relative;z-index:1;flex:0 0 78%;max-width:300px;scroll-snap-align:start;background:var(--card);border-radius:14px;padding:12px 13px;box-shadow:0 1px 3px rgba(20,30,50,.08);border:1px solid var(--line);font-size:14.5px;line-height:1.5}
+.card.solo{flex-basis:calc(100% - 4px);max-width:none}
+.card{display:flex;gap:11px;align-items:flex-start}
+.th{flex:0 0 64px;width:64px;height:64px;border-radius:10px;object-fit:cover;background:#e9edf3}
+.ph{display:flex;align-items:center;justify-content:center;font-size:22px;color:#b3bccb;background:repeating-linear-gradient(45deg,#eef1f5,#eef1f5 6px,#e6eaf0 6px,#e6eaf0 12px)}
+.tx{flex:1;min-width:0}
+.lab{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:2px 7px;margin-bottom:6px;color:#fff}
+.main .lab{background:var(--ink)}
+.alt{background:#fff8f1;border-color:#ffd9b5}.alt .lab{background:var(--alt)}
+.rain{background:#f0f7ff;border-color:#c5def5}.rain .lab{background:var(--rain)}
+.credit{font-size:11px;color:var(--mute);padding:18px 16px 0;line-height:1.6}
+.more{font-size:11px;color:var(--mute);padding:0 16px 0 46px}
+</style></head><body>
+<header>
+ <h1>2027 九州春節親子旅行</h1>
+ <nav class="tabs" id="tabs"></nav>
+</header>
+<main class="pager" id="pager"></main>
+<script>
+const RULES=[[/鋼彈|LaLaport/,"lala"],[/城彩苑/,"joosaien"],[/熊本城/,"kcastle"],[/湯之坪/,"yunotsubo"],[/金鱗湖/,"kinrin"],[/由布院午餐/,"yufulunch"],[/麵包超人/,"anpan"],[/大濠/,"ohori"],[/舞鶴/,"maizuru"],[/岩田屋|大丸|天神購物/,"tenjin"],[/地下街/,"chika"],[/博多站/,"hakata"],[/下通/,"shimotori"]];
+const thumb=t=>{const r=RULES.find(x=>x[0].test(t));return r?`<img class="th" src="thumbs/${r[1]}.jpg" alt="" loading="lazy">`:`<div class="th ph">📍</div>`};
+const DAYS=[{"date": "2/5", "wd": "週五", "stay": "博多", "note": "✈️ 16:55 抵達福岡", "slots": [{"t": "16:55～18:30", "main": "抵達福岡、入境、領行李", "alts": [], "rains": []}, {"t": "18:30～19:30", "main": "接送車或計程車進市區、入住", "alts": [], "rains": []}, {"t": "19:30～20:30", "main": "飯店附近除夕晚餐", "alts": ["博多站餐廳", "外帶回飯店吃"], "rains": ["飯店或車站的室內餐廳"]}, {"t": "20:30 後", "main": "洗澡、休息", "alts": ["大人分組採買隔天用品"], "rains": []}]}, {"date": "2/6", "wd": "週六", "stay": "熊本市區", "note": "", "slots": [{"t": "08:00～09:30", "main": "早餐、退房、取車", "alts": [], "rains": []}, {"t": "09:30～11:00", "main": "LaLaport 福岡看鋼彈、拍照", "alts": ["加逛 LaLaport 商場（多 2～3 小時）"], "rains": ["只逛商場室內，取消戶外鋼彈拍照"]}, {"t": "11:00～14:00", "main": "開往熊本，途中休息與午餐", "alts": [], "rains": []}, {"t": "14:00～15:30", "main": "熊本城", "alts": ["城外拍照＋城彩苑短逛"], "rains": ["AMU PLAZA 熊本", "湧湧座（待確認復業）"]}, {"t": "15:30～16:15", "main": "城彩苑小吃、伴手禮", "alts": ["直接入住飯店"], "rains": []}, {"t": "16:15～17:30", "main": "入住、房內休息", "alts": ["大人分組短逛"], "rains": []}, {"t": "17:30～19:00", "main": "飯店附近晚餐", "alts": ["下通商店街短逛＋晚餐"], "rains": ["室內餐廳"]}]}, {"date": "2/7", "wd": "週日", "stay": "由布院", "note": "", "slots": [{"t": "08:00～09:30", "main": "早餐、退房", "alts": ["飯店附近散步"], "rains": []}, {"t": "09:30～12:30", "main": "熊本開往由布院", "alts": ["經阿蘇：道之驛阿蘇短停，遠看阿蘇五岳"], "rains": ["大雪或封路：取消由布院，改回福岡（隔天可去海之中道水族館）"]}, {"t": "12:30～13:30", "main": "由布院午餐", "alts": ["旅館附近餐廳"], "rains": ["可停車的室內餐廳"]}, {"t": "13:30～14:45", "main": "湯之坪街道短逛", "alts": ["金鱗湖短散步"], "rains": ["咖啡店", "湯布院 Trick 3D Art"]}, {"t": "15:00～17:30", "main": "旅館入住、午睡、輪流泡湯", "alts": ["旅館庭園短走"], "rains": []}, {"t": "17:30～19:00", "main": "旅館晚餐（一泊二食）", "alts": ["附近餐廳（沒訂旅館晚餐時）"], "rains": []}, {"t": "19:00 後", "main": "寶寶睡覺，大人輪流泡湯", "alts": [], "rains": []}]}, {"date": "2/8", "wd": "週一", "stay": "天神", "note": "", "slots": [{"t": "08:00～09:30", "main": "旅館早餐、整理行李", "alts": ["再泡一次湯"], "rains": []}, {"t": "09:30～10:30", "main": "金鱗湖短走", "alts": ["補逛湯之坪街道", "別府纜車（約 1～1.5 小時，天神要順延到傍晚）"], "rains": ["直接退房，提早回福岡"]}, {"t": "10:30～13:30", "main": "開回福岡，途中簡單午餐", "alts": ["到福岡再吃午餐"], "rains": []}, {"t": "13:30～15:00", "main": "飯店寄放行李／入住、加油還車", "alts": [], "rains": []}, {"t": "15:00～17:30", "main": "天神購物：岩田屋或大丸", "alts": ["天神地下街", "麵包超人兒童博物館（2 位大人帶寶寶）"], "rains": []}, {"t": "17:30～19:00", "main": "天神晚餐", "alts": ["百貨餐廳", "外帶回飯店"], "rains": []}, {"t": "19:00 後", "main": "休息、整理回程行李", "alts": ["大人分組補逛"], "rains": []}]}, {"date": "2/9", "wd": "週二", "stay": "返台", "note": "✈️ 16:40 福岡起飛", "slots": [{"t": "08:00～09:15", "main": "早餐、退房、寄放行李", "alts": [], "rains": []}, {"t": "09:30～10:45", "main": "大濠公園湖畔＋幼兒遊戲區", "alts": ["舞鶴公園梅園", "麵包超人兒童博物館（10:00～12:00）"], "rains": ["福岡市美術館", "百貨公司逛街"]}, {"t": "11:15～12:00", "main": "天神附近提早午餐", "alts": [], "rains": []}, {"t": "12:00～12:45", "main": "取行李、準備出發", "alts": [], "rains": []}, {"t": "12:45～13:40", "main": "接送車或計程車到福岡機場國際線", "alts": [], "rains": []}, {"t": "13:40～16:40", "main": "報到、托運、安檢、候機", "alts": [], "rains": []}]}];
+const tabs=document.getElementById('tabs'),pager=document.getElementById('pager');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+DAYS.forEach((d,i)=>{
+  const b=document.createElement('button');b.className='tab';b.innerHTML=`第 ${i+1} 天<small>${d.date} ${d.wd.slice(1)}</small>`;
+  b.onclick=()=>pager.scrollTo({left:i*pager.clientWidth,behavior:'smooth'});tabs.appendChild(b);
+  const p=document.createElement('section');p.className='page';
+  let h=`<div class="dhead"><div class="date">${d.date.replace('/','/0').replace(/^(\d)/,'0$1')}<span>${d.wd}</span></div>
+   <div class="chips"><span class="chip">🏨 住宿：${esc(d.stay)}</span>${d.note?`<span class="chip">${d.note}</span>`:''}</div></div>
+   <div class="legend"><span><i style="background:var(--ink)"></i>主行程</span><span><i style="background:var(--alt)"></i>備選</span><span><i style="background:var(--rain)"></i>雨備</span></div>`;
+  d.slots.forEach((s,j)=>{
+    const cards=[`<div class="card main">${thumb(s.main)}<div class="tx"><span class="lab">主行程</span><div>${esc(s.main)}</div></div></div>`]
+      .concat(s.alts.map(a=>`<div class="card alt">${thumb(a)}<div class="tx"><span class="lab">備選</span><div>${esc(a)}</div></div></div>`))
+      .concat(s.rains.map(r=>`<div class="card rain">${thumb(r)}<div class="tx"><span class="lab">雨備</span><div>${esc(r)}</div></div></div>`));
+    if(cards.length===1)cards[0]=cards[0].replace('card main','card main solo');
+    h+=`<div class="slot"><div class="time"><span class="num">${j+1}</span><span class="tt">${esc(s.t)}</span></div>
+      <div class="row">${cards.join('')}</div>${cards.length>1?`<div class="more">← 左右滑看 ${cards.length-1} 個替代方案</div>`:''}</div>`;
+  });
+  h+=`<div class="credit">縮圖：由布院、LaLaport 為自行提供的照片；其餘來自 Wikimedia Commons（CC 授權），作者與授權標示在「福岡親子行程排序」頁的大圖上。</div>`;
+  p.innerHTML=h;pager.appendChild(p);
+});
+function mark(){const i=Math.round(pager.scrollLeft/pager.clientWidth);
+  [...tabs.children].forEach((t,k)=>t.classList.toggle('on',k===i));
+  const t=tabs.children[i];if(t)t.scrollIntoView({inline:'center',block:'nearest'});
+  try{localStorage.setItem('kyushu-day',i)}catch(e){}}
+let tm;pager.addEventListener('scroll',()=>{clearTimeout(tm);tm=setTimeout(mark,60)},{passive:true});
+let start=0;try{start=+localStorage.getItem('kyushu-day')||0}catch(e){}
+requestAnimationFrame(()=>{pager.scrollLeft=start*pager.clientWidth;mark()});
+</script></body></html>
