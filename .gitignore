@@ -1,0 +1,13 @@
+.DS_Store
+
+# Credentials and local runtime files
+.env
+.env.*
+!.env.example
+maps-config.js
+*.key
+*.pem
+__pycache__/
+
+# Unpublished Sites checkout retained for future deployment
+hosted/
