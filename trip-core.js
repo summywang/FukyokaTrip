@@ -64,6 +64,12 @@
  function removeSlot(state,id){const found=findSlot(state,id);state.days[found.day].slots.splice(found.index,1)}
  function detachAlternative(state,slotId,altId){const {slot}=findSlot(state,slotId);slot.alternatives=slot.alternatives.filter(alt=>alt.id!==altId)}
  function removePlace(state,id){if(placed(state,id))throw Error('請先將地點移回待安排。');state.places=state.places.filter(place=>place.id!==id)}
+ function ensureNotes(state,data){if(state.notes===undefined)state.notes=data.tasks.map(([id,title,body])=>({id:'note-'+id,title,body,archived:state.done?.[id]===true}));return state}
+ function findNote(state,id){const note=state.notes?.find(note=>note.id===id);if(!note)throw Error('找不到這則筆記。');return note}
+ function noteValues(values){const title=String(values.title||'').trim(),body=String(values.body||'').trim();if(!title)throw Error('請填寫筆記標題。');if(title.length>180||body.length>8000)throw Error('筆記內容過長。');return {title,body}}
+ function addNote(state,values){if(!Array.isArray(state.notes))throw Error('筆記尚未初始化。');if(state.notes.length>=500)throw Error('筆記已達 500 則上限。');const note={id:'note-'+uid(),...noteValues(values),archived:false};state.notes.unshift(note);return note.id}
+ function editNote(state,id,values){Object.assign(findNote(state,id),noteValues(values))}
+ function archiveNote(state,id,archived=true){if(typeof archived!=='boolean')throw Error('封存狀態不正確。');findNote(state,id).archived=archived}
  function validate(state){
   const text=(v,max)=>typeof v==='string'&&v.length<=max;
   const id=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(v);
@@ -74,8 +80,9 @@
   if(state.altDays!==undefined&&(!Array.isArray(state.altDays)||state.altDays.length!==2||!['A','B'].includes(state.plan)))throw Error('A／B 方案資料不正確。');
   for(const day of [...state.days,...(state.altDays||[])]){if(!text(day.date,20)||!text(day.title,180)||!text(day.stay,180)||!text(day.note,8000)||!Array.isArray(day.slots)||day.slots.length>500)throw Error('每日行程格式不正確。');for(const slot of day.slots){if(!id(slot.id)||ids.has(slot.id)||!text(slot.title,180)||!slot.title.trim()||!text(slot.time,80)||!text(slot.note,8000)||!text(slot.url,8192)||!Array.isArray(slot.alternatives)||!Array.isArray(slot.secondary)||!slot.secondary.every(item=>typeof item==='string'&&item.length<=40)||!(slot.asset===undefined||typeof slot.asset==='string'&&slot.asset.length<=40))throw Error('行程時段格式不正確。');if(slot.gallery!==undefined&&!(Array.isArray(slot.gallery)&&slot.gallery.length<=10&&slot.gallery.every(group=>group&&text(group.title,80)&&Array.isArray(group.assets)&&group.assets.length<=20&&group.assets.every(item=>text(item,40)))))throw Error('行程照片分組格式不正確。');ids.add(slot.id);if(slot.flight)validateFlight(slot.flight);if(slot.url)googleUrl(slot.url);if(slot.placeId)assign(slot.placeId);for(const alt of slot.alternatives){if(!id(alt.id)||ids.has(alt.id))throw Error('備選行程格式不正確。');ids.add(alt.id);assign(alt.placeId)}}}
   if(!state.done||typeof state.done!=='object'||Array.isArray(state.done))throw Error('待辦格式不正確。');
+  if(state.notes!==undefined){if(!Array.isArray(state.notes)||state.notes.length>500)throw Error('筆記格式不正確。');const noteIds=new Set();for(const note of state.notes){if(!note||!id(note.id)||noteIds.has(note.id)||!text(note.title,180)||!note.title.trim()||!text(note.body,8000)||typeof note.archived!=='boolean')throw Error('筆記格式不正確。');noteIds.add(note.id)}}
   return state;
  }
- const api={clone,ensurePlans,refreshPhotos,switchPlan,durationLabel,initializeFlights,flightDurationLabel,slotKind,transportEstimate,googleUrl,titleFromUrl,initial,placed,findSlot,findPlace,addPlace,updatePlace,schedule,moveSlot,editSlot,removeSlot,detachAlternative,removePlace,validate};
+ const api={clone,ensurePlans,ensureNotes,findNote,addNote,editNote,archiveNote,refreshPhotos,switchPlan,durationLabel,initializeFlights,flightDurationLabel,slotKind,transportEstimate,googleUrl,titleFromUrl,initial,placed,findSlot,findPlace,addPlace,updatePlace,schedule,moveSlot,editSlot,removeSlot,detachAlternative,removePlace,validate};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TripCore=api;
 })(globalThis);
