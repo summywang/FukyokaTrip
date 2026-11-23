@@ -62,7 +62,7 @@ function openSlotDetails(id){selectedSlotId=id;const {slot,day}=C.findSlot(state
  if(stay)information+=lodgingInfo(stay);
  information+=rentalDetails(slot);
  if(kind==='flight')information+=detailText('航班',slot.flight.number)+detailText('出發機場',slot.flight.fromName+' '+slot.flight.fromCode)+detailText('抵達機場',slot.flight.toName+' '+slot.flight.toCode);
- for(const group of slot.gallery||[])information+=detailText(group.title,group.assets.filter(id=>assets[id]).map(id=>assets[id].title).join('、'));
+ for(const group of slot.gallery||[])if(group.showDescription!==false)information+=detailText(group.title,group.assets.filter(id=>assets[id]).map(id=>assets[id].title).join('、'));
  information+=alternativeInfo(slot);
  const cover=stay?.photos?.length?`<button type="button" class="photo" data-lodging="${day}" data-photo="0" aria-label="放大${esc(cleanTitle(stay.name))}封面"><img src="${esc(stay.photos[0].src)}" alt="${esc(cleanTitle(stay.name))}" referrerpolicy="no-referrer"></button>`:photo(slot.asset);
  $('slot-sheet-body').innerHTML=`<div class="sheet-overview">${cover}${meta}</div>`+'<hr class="sheet-divider">'+(media?`<div class="detail-media">${media}</div>`:'')+(information?`<dl class="sheet-meta sheet-info">${information}</dl>`:'');
