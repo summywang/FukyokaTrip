@@ -15,6 +15,50 @@ test('migration from the old itinerary keeps custom places and unchanged task ti
 test('switching to plan B swaps 2/7–2/8, keeps edits to the hidden plan, and survives backup validation',()=>{const state=initial();const aFirst=state.days[2].slots[0].id;C.editSlot(state,state.days[2].slots[2].id,{day:2,title:'改過的午餐',time:'11:30–12:30',note:'',url:''});C.switchPlan(state,'B');assert.equal(state.plan,'B');assert.equal(state.days.length,5);assert.equal(state.days[2].title,'小倉城 → 天神・LaLaport');assert.equal(state.days[3].title,'天拝の郷 泡湯');assert.equal(state.days[4].date,'2/9');C.validate(C.clone(state));const place=state.places[0];C.schedule(state,place.id,{day:3,mode:'main'});C.switchPlan(state,'A');assert.equal(state.days[2].slots[0].id,aFirst);assert.equal(state.days[2].slots[2].title,'改過的午餐');assert(C.placed(state,place.id),'place scheduled in hidden plan still counts as placed');assert.throws(()=>C.schedule(state,place.id,{day:1,mode:'main'}));const old=C.clone(state);delete old.altDays;delete old.plan;C.validate(old);C.ensurePlans(old,DATA);assert.equal(old.altDays.length,2);C.validate(old);assert.throws(()=>C.switchPlan(state,'C'))});
 test('photos added later reach browsers that saved an older copy, without touching custom slots or edited text',()=>{const state=initial();const bath=state.altDays[1].slots[3];bath.asset='';delete bath.gallery;const renamedSpot=state.altDays[1].slots[2];renamedSpot.title='自己改的名字';renamedSpot.asset='';const custom=C.schedule(state,state.places[0].id,{day:0,mode:'main'});C.findSlot(state,custom).slot.asset='';C.refreshPhotos(state,DATA);assert.equal(bath.asset,'T01');assert.equal(bath.gallery.length,2);assert.equal(renamedSpot.title,'自己改的名字');assert.equal(renamedSpot.asset,'','edited slots are left alone');assert.equal(C.findSlot(state,custom).slot.asset,'');C.validate(state)});
 test('drive titles no longer say 停車, and older saved copies pick up the renamed titles unless the family edited them',()=>{for(const day of [...DATA.days,...DATA.planB.days])for(const slot of day.slots)if(['C03','S04'].includes(slot.primary_asset))assert(!/停車/.test(slot.activity),slot.activity);const state=initial();const drive=state.days[1].slots[4];drive.title='前往門司港與停車';const edited=state.days[1].slots[1];edited.title='自己改的';C.refreshPhotos(state,DATA);assert.equal(drive.title,'前往門司港');assert.equal(edited.title,'自己改的')});
-test('2/6 follows the Sarakurayama timing: leave Mojiko 16:15, buy cable car tickets at 17:15',()=>{const state=initial(),slots=state.days[1].slots;const drive=slots.find(s=>s.title==='前往皿倉山'),ride=slots.find(s=>s.title==='皿倉山纜車購票・上山');assert.equal(drive.time,'16:15–17:15');assert.equal(C.slotKind(drive),'transport');assert.equal(ride.time,'17:15–17:45');assert.equal(C.slotKind(ride),'activity')});
+test('2/6 follows the Sarakurayama timing: leave Mojiko 16:30, buy cable car tickets at 17:30',()=>{const state=initial(),slots=state.days[1].slots;const drive=slots.find(s=>s.title==='前往皿倉山'),ride=slots.find(s=>s.title==='皿倉山纜車購票・上山');assert.equal(drive.time,'16:30–17:30');assert.equal(C.slotKind(drive),'transport');assert.equal(ride.time,'17:30–18:00');assert.equal(C.slotKind(ride),'activity')});
 
-test('source corrections migrate untouched arrival clocks and lodging links, while preserving family edits',()=>{const state=C.initial(DATA);const arrival=state.days[0].slots[2];arrival.title='福岡抵達 入境與領行李';arrival.time='16:55–18:15';arrival.note='以日本時間計，約留 80 分鐘，排隊可能延長。';const stay=state.days[1].slots[10];stay.url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('小倉駅 北九州市');const edited=state.days[3].slots[5];edited.title='自己命名的住宿';edited.time='16:00–17:00';C.refreshPhotos(state,DATA);assert.equal(arrival.title,'福岡抵達入境與租車');assert.equal(arrival.time,'16:55–19:00');assert.match(arrival.note,/租車公司/);assert.match(decodeURIComponent(stay.url),/葛原東2-2-2/);assert.equal(edited.title,'自己命名的住宿');assert.equal(edited.time,'16:00–17:00');arrival.time='17:30–20:00';C.refreshPhotos(state,DATA);assert.equal(arrival.time,'17:30–20:00');C.validate(state)});
+test('source corrections migrate untouched arrival clocks and lodging links, while preserving family edits',()=>{const state=C.initial(DATA);const arrival=state.days[0].slots[2];arrival.title='福岡抵達 入境與領行李';arrival.time='16:55–18:15';arrival.note='以日本時間計，約留 80 分鐘，排隊可能延長。';const stay=state.days[1].slots[10];stay.url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('小倉駅 北九州市');const edited=state.days[3].slots[5];edited.title='自己命名的住宿';edited.time='16:00–17:00';C.refreshPhotos(state,DATA);assert.equal(arrival.title,'福岡抵達入境與租車');assert.equal(arrival.time,'17:00–19:00');assert.match(arrival.note,/租車公司/);assert.match(decodeURIComponent(stay.url),/葛原東2-2-2/);assert.equal(edited.title,'自己命名的住宿');assert.equal(edited.time,'16:00–17:00');arrival.time='17:30–20:00';C.refreshPhotos(state,DATA);assert.equal(arrival.time,'17:30–20:00');C.validate(state)});
+
+test('both plans use half-hour activity boundaries, keep merged rows hidden, and retain fixed flight clocks',()=>{
+ const state=C.initializeFlights(C.initial(DATA));
+ for(const day of [...state.days,...state.altDays]){
+  let previousEnd=0;
+  for(const slot of day.slots){
+   if(slot.flight)continue;
+   const clocks=[...slot.time.matchAll(/(\d{1,2}):(\d{2})/g)];
+   assert(clocks.length>0,slot.id);
+   for(const clock of clocks)assert(['00','30'].includes(clock[2]),`${slot.id}: ${slot.time}`);
+   const merge=DATA.mergedSlots[slot.id];
+   if(merge){
+    const parent=day.slots.find(s=>s.id===merge.parent);
+    assert.equal(slot.time,merge.time);assert.equal(parent.time,merge.parentTime);continue;
+   }
+   const start=+clocks[0][1]*60 + +clocks[0][2];
+   assert(start>=previousEnd,`${slot.id} overlaps previous activity`);
+   if(clocks.length===2){const end=+clocks[1][1]*60 + +clocks[1][2];assert(end>start,slot.id);previousEnd=end;}else previousEnd=start;
+  }
+ }
+ const outbound=C.findSlot(state,'day-0-slot-1').slot.flight,inbound=C.findSlot(state,'day-4-slot-8').slot.flight;
+ assert.equal(outbound.fromTime,'13:40');assert.equal(outbound.toTime,'16:55');assert.equal(inbound.fromTime,'16:40');assert.equal(inbound.toTime,'18:30');
+ assert.equal(C.transportEstimate(C.findSlot(state,'day-1-slot-6').slot),'預估 1 小時');
+ assert.equal(C.transportEstimate(C.findSlot(state,'day-4-slot-6').slot),'預估 1 小時');
+});
+
+test('half-hour migration updates prior and earliest arrival clocks and hidden plan, preserving custom edits on reload',()=>{
+ const state=C.initial(DATA);
+ state.days[0].slots[2].time='16:55–19:00';
+ state.days[1].slots[5].time='15:30–16:15';
+ state.days[1].slots[6].time='16:15–17:15';
+ state.days[1].slots[8].time='18:15–19:15'; // Family changed this; do not round it automatically.
+ state.altDays[0].slots[9].time='19:30–20:15';
+ C.refreshPhotos(state,DATA);
+ assert.equal(state.days[0].slots[2].time,'17:00–19:00');
+ assert.equal(state.days[1].slots[5].time,'15:30–16:30');
+ assert.equal(state.days[1].slots[6].time,'16:30–17:30');
+ assert.equal(state.days[1].slots[8].time,'18:15–19:15');
+ assert.equal(state.altDays[0].slots[9].time,'19:30–20:30');
+ state.days[0].slots[2].time='16:55–18:15';C.refreshPhotos(state,DATA);
+ assert.equal(state.days[0].slots[2].time,'17:00–19:00');
+ const reloaded=C.validate(JSON.parse(JSON.stringify(state)));C.refreshPhotos(reloaded,DATA);
+ assert.deepEqual(reloaded,state);
+});
