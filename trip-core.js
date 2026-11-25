@@ -34,13 +34,46 @@
  function initial(data,legacy={}){const done=clone(legacy.done||{});for(const key of CHANGED_TASKS)delete done[key];return {version:1,day:Number.isInteger(legacy.day)&&legacy.day>=0&&legacy.day<5?legacy.day:0,done,places:[
   ...legacyPlaces(legacy)
  ],days:buildDays(data.days,'day-'),plan:'A',altDays:planBDays(data)}}
- function buildDays(days,prefix,offset=0){return days.map((day,d)=>({...clone(day),slots:day.slots.map((slot,s)=>({id:`${prefix}${d+offset}-slot-${s}`,title:slot.activity,time:slot.time,note:slot.reminder,url:slot.map.url?googleUrl(slot.map.url):searchUrl(slot.map.query),asset:slot.primary_asset,secondary:slot.secondary_assets||[],custom:false,alternatives:[],...(slot.gallery?{gallery:clone(slot.gallery)}:{}),...(slot.kind?{kind:slot.kind}:{})}))}))}
+ function buildDays(days,prefix,offset=0){return days.map((day,d)=>({...clone(day),slots:day.slots.map((slot,s)=>({id:`${prefix}${d+offset}-slot-${slot.slotKey??s}`,title:slot.activity,time:slot.time,note:slot.reminder,url:slot.map.url?googleUrl(slot.map.url):searchUrl(slot.map.query),asset:slot.primary_asset,secondary:slot.secondary_assets||[],custom:false,alternatives:[],...(slot.gallery?{gallery:clone(slot.gallery)}:{}),...(slot.kind?{kind:slot.kind}:{})}))}))}
  // Plan B replaces days 2–3 (2/7–2/8). The plan not on screen waits in altDays, so edits to either plan are kept.
  const PLAN_DAYS=[2,3];
  function planBDays(data){return data.planB?buildDays(data.planB.days,'plan-b-',PLAN_DAYS[0]):[]}
  function ensurePlans(state,data){if(!Array.isArray(state.altDays)){state.plan='A';state.altDays=planBDays(data)}return state}
  // Photos added to the built-in itinerary after a browser saved its copy: refresh them on original (non-custom) slots by id. Titles, times and notes stay as the family edited them.
- function refreshPhotos(state,data){const fresh=new Map();for(const day of [...buildDays(data.days,'day-'),...planBDays(data)])for(const slot of day.slots)fresh.set(slot.id,slot);for(const day of [...state.days,...(state.altDays||[])])for(const slot of day.slots){const source=!slot.custom&&fresh.get(slot.id);if(!source)continue;if(data.noteUpdates&&Object.hasOwn(data.noteUpdates,slot.note))slot.note=data.noteUpdates[slot.note];if(data.renamed&&Object.hasOwn(data.renamed,slot.title)&&data.renamed[slot.title]===source.title)slot.title=source.title;if(slot.title!==source.title)continue;const update=data.slotUpdates?.[slot.id];if(update&&[update.oldTime,...(update.oldTimes||[])].includes(slot.time))slot.time=update.time;const oldUrl=data.urlUpdates?.[slot.id];if(oldUrl&&slot.url===searchUrl(oldUrl))slot.url=source.url;slot.asset=source.asset;if(source.gallery)slot.gallery=clone(source.gallery);else delete slot.gallery}return state}
+ function refreshPhotos(state,data){
+  const currentDays=[...state.days,...(state.altDays||[])];
+  const fresh=new Map();
+  for(const day of [...buildDays(data.days,'day-'),...planBDays(data)]){
+   for(const slot of day.slots)fresh.set(slot.id,slot);
+   for(const [index,slot] of day.slots.entries()){
+    if(!slot.id.endsWith('-to-yoshizuka')&&!slot.id.endsWith('-to-tenjin'))continue;
+    const anchor=day.slots[index+1];
+    const update=data.slotUpdates?.[anchor.id];
+    const savedDay=currentDays.find(day=>day.slots.some(saved=>saved.id===anchor.id));
+    if(!savedDay||currentDays.some(day=>day.slots.some(saved=>saved.id===slot.id)))continue;
+    const savedIndex=savedDay.slots.findIndex(saved=>saved.id===anchor.id);
+    const saved=savedDay.slots[savedIndex];
+    if(!saved.custom&&saved.title===anchor.title&&saved.time===update?.oldTime)savedDay.slots.splice(savedIndex,0,clone(slot));
+   }
+  }
+  for(const day of currentDays)for(const slot of day.slots){
+   const source=!slot.custom&&fresh.get(slot.id);
+   if(!source)continue;
+   if(data.noteUpdates&&Object.hasOwn(data.noteUpdates,slot.note))slot.note=data.noteUpdates[slot.note];
+   if(data.renamed&&Object.hasOwn(data.renamed,slot.title)&&data.renamed[slot.title]===source.title)slot.title=source.title;
+   if(slot.title!==source.title)continue;
+   const update=data.slotUpdates?.[slot.id];
+   if(update&&[update.oldTime,...(update.oldTimes||[])].includes(slot.time)){
+    slot.time=update.time;
+    if(update.oldNote===slot.note)slot.note=source.note;
+   }
+   const oldUrl=data.urlUpdates?.[slot.id];
+   if(oldUrl&&slot.url===searchUrl(oldUrl))slot.url=source.url;
+   slot.asset=source.asset;
+   if(source.gallery)slot.gallery=clone(source.gallery);else delete slot.gallery;
+  }
+  return state;
+ }
  function switchPlan(state,plan){if(!['A','B'].includes(plan))throw Error('方案只能是 A 或 B。');if(state.plan===plan)return;const shown=state.days.splice(PLAN_DAYS[0],PLAN_DAYS.length,...state.altDays);state.altDays=shown;state.plan=plan}
  const placed=(state,id)=>[...state.days,...(state.altDays||[])].some(day=>day.slots.some(slot=>slot.placeId===id||slot.alternatives.some(alt=>alt.placeId===id)));
  function findSlot(state,id){for(let day=0;day<state.days.length;day++){const index=state.days[day].slots.findIndex(slot=>slot.id===id);if(index>=0)return {day,index,slot:state.days[day].slots[index]}}throw Error('找不到這段行程。')}
