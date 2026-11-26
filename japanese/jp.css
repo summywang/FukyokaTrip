@@ -1,38 +1,56 @@
 /* Travel-Japanese cards, shared by the itinerary detail page and japanese/index.html. */
 .jp-sheet .sheet-body{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 [lang="ja"]{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif}
-.jp-ja{display:block;font-size:24px;line-height:1.95;font-weight:600;color:#17353b;overflow-wrap:anywhere}
-.jp-ja rt{font-size:11px;font-weight:500;color:#5b6d72;letter-spacing:0}
-.jp-ro{display:block;font-size:15px;line-height:1.5;color:#2f5a61;overflow-wrap:anywhere}
-.jp-zh{display:block;margin-top:2px;font-size:14px;line-height:1.55;color:#5b6d72}
+/* One phrase: furigana above each word group, romaji under it, Chinese centred below. */
+.jp-phrase{padding:18px 0;border-bottom:1px solid #e1eaea;text-align:center}.jp-section>.jp-phrase:last-child{border-bottom:0}
+.jp-line{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;column-gap:12px;row-gap:6px}
+.jp-chunk{display:inline-flex;flex-direction:column;align-items:center;min-width:0}
+.jp-chunk-ja{font-size:24px;line-height:1.95;font-weight:600;color:#17353b;white-space:nowrap}
+.jp-chunk-ja rt{font-size:11px;font-weight:500;color:#5b6d72;letter-spacing:0}
+.jp-chunk-ro{font-size:14px;line-height:1.35;color:#2f5a61;white-space:nowrap}
+.jp-zh{display:block;margin-top:9px;font-size:14px;line-height:1.55;color:#5b6d72}
+html[data-jp-furigana="off"] ruby rt{display:none}
+html[data-jp-romaji="off"] .jp-chunk-ro{display:none}
+html[data-jp-chinese="off"] .jp-zh{display:none}
 .jp-intro{margin:0 0 4px;padding:11px 13px;border-radius:10px;background:#f2f6f6;font-size:15px;line-height:1.65}
 .jp-tips{margin:12px 0 0;padding-left:20px;font-size:15px;line-height:1.7}
-.jp-section{margin-top:24px}.jp-section:first-child{margin-top:0}
-.jp-section>h3{margin:0 0 4px;font-size:15px;font-weight:700;color:#a84a26;letter-spacing:.5px}
-.jp-phrase{padding:14px 0;border-bottom:1px solid #e1eaea}.jp-section>.jp-phrase:last-child{border-bottom:0}
-.jp-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+.jp-section{margin-top:26px}.jp-section:first-child{margin-top:0}
+.jp-section>h3{margin:0;font-size:15px;font-weight:700;color:#a84a26;letter-spacing:.5px;text-align:center}
+.jp-tools{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}
 .jp-tool{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:5px 12px 5px 9px;border:1px solid #cfdddd;border-radius:999px;background:#fff;color:#193f43;font-size:14px;font-weight:600;line-height:1.2}
 .jp-tool svg{width:19px;height:19px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .jp-tool:active{background:#eaf2f2}
-.jp-replies{margin-top:12px;padding-left:13px;border-left:3px solid #d7e6e7}
+.jp-replies{margin:14px auto 0;max-width:560px;padding:8px 12px 2px;border-radius:14px;background:#f4f8f8}
 .jp-reply-label{margin:0;font-size:13px;font-weight:600;color:#5b6d72}
-.jp-reply{padding:6px 0 4px;border-bottom:0}.jp-ja-reply{font-size:20px}
-.jp-words{display:flex;flex-direction:column}
-.jp-word{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #e1eaea}.jp-word:last-child{border-bottom:0}
-.jp-word-copy{flex:1;min-width:0}.jp-ja-word{font-size:20px;line-height:1.9}
-.jp-word-play{flex-shrink:0;width:40px;height:40px;padding:0;justify-content:center}
-.jp-tag{flex-shrink:0;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
+.jp-reply{padding:6px 0 10px;border-bottom:0}.jp-reply+.jp-reply{border-top:1px solid #e1eaea;padding-top:12px}.jp-reply .jp-chunk-ja{font-size:20px}
+.jp-word{padding:14px 0}.jp-word .jp-chunk-ja{font-size:21px}
+.jp-word-foot{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:10px}
+.jp-tag{padding:4px 11px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
 .jp-tag.is-no{background:#fbe4df;color:#a13c29}.jp-tag.is-ask{background:#fff1cf;color:#7d5300}.jp-tag.is-ok{background:#e1f1e4;color:#2c6a38}.jp-tag.is-unset{background:#eceff0;color:#5b6d72}
-.jp-diet{padding:15px 15px 13px;border:1px solid #ead2bb;border-radius:14px;background:#fff7ef}
+.jp-diet{padding:16px 14px 14px;border:1px solid #ead2bb;border-radius:14px;background:#fff7ef}
 .jp-diet>h3{color:#8b5029}
-.jp-diet-actions{display:flex;flex-wrap:wrap;gap:9px;margin:8px 0 4px}
+.jp-diet-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:10px 0 2px}
 .jp-diet-show{display:inline-flex;align-items:center;gap:7px;min-height:42px;border-radius:999px;padding:8px 16px 8px 13px}
 .jp-diet-show svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.jp-diet .jp-phrase{border-bottom-color:#efdcca}.jp-diet .jp-ja{font-size:20px;line-height:1.95}
+.jp-diet .jp-phrase{border-bottom-color:#efdcca}.jp-diet .jp-chunk-ja{font-size:20px}
 .jp-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
 .jp-setting{display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:600;color:#715033}
 .jp-setting select{margin-top:0;padding:7px 9px;font-size:16px;border-color:#dec3a8}
 .jp-hint{margin:10px 0 0;font-size:13px;line-height:1.55;color:#715033}
+.jp-head-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.jp-gear svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* Display settings sheet. */
+.jp-display-sheet{height:auto;max-height:88dvh}
+.jp-display-sample{margin:-4px 0 6px;padding:14px 12px;border:0;border-radius:14px;background:#f4f8f8}
+.jp-switches{display:flex;flex-direction:column}
+.jp-switch-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #e1eaea}
+.jp-switch-icon{flex:0 0 36px;display:grid;place-items:center;height:36px;border-radius:10px;background:#e8f2f1;color:#193f43;font-size:13px;font-weight:800;letter-spacing:.3px}
+.jp-switch-icon [lang="ja"]{font-size:18px;font-weight:600}
+.jp-switch-copy{flex:1;min-width:0;display:flex;flex-direction:column}.jp-switch-label{font-size:17px;font-weight:650}.jp-switch-hint{font-size:13px;color:#5b6d72}
+.jp-switch{position:relative;flex:0 0 52px;width:52px;height:32px;padding:0;border:0;border-radius:999px;background:#c9d6d7;transition:background .15s}
+.jp-switch>span{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:transform .15s}
+.jp-switch[aria-checked="true"]{background:#193f43}.jp-switch[aria-checked="true"]>span{transform:translateX(20px)}
+@media(prefers-reduced-motion:reduce){.jp-switch,.jp-switch>span{transition:none}}
 /* Chips in the itinerary detail page. */
 .jp-slot{margin-top:18px}.jp-slot-title{margin:0 0 8px;font-size:14px;font-weight:600;color:#5b6d72}
 .jp-chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -44,12 +62,12 @@
 .jp-show[open]{display:flex;flex-direction:column}
 .jp-show::backdrop{background:#fff}
 .jp-show-bar{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px 16px;border-bottom:1px solid #e1eaea}
-.jp-show-body{flex:1;min-height:0;overflow-y:auto;padding:22px max(20px,calc(50% - 360px)) calc(32px + env(safe-area-inset-bottom))}
-.jp-show-lines{display:flex;flex-direction:column;gap:22px;min-height:100%;justify-content:center}
-.jp-show-lines.is-many{justify-content:flex-start;gap:16px}
-.jp-show-line{padding-bottom:16px;border-bottom:1px solid #e1eaea}.jp-show-line:last-child{border-bottom:0}
-.jp-ja-show{font-size:34px;line-height:1.85;font-weight:700}.jp-ja-show rt{font-size:13px}
-.is-many .jp-ja-show{font-size:25px;line-height:1.9}.is-many .jp-ja-show rt{font-size:11px}
-.jp-show .jp-ro{font-size:17px}.jp-show .jp-zh{font-size:15px}
+.jp-show-body{flex:1;min-height:0;overflow-y:auto;padding:22px max(16px,calc(50% - 380px)) calc(32px + env(safe-area-inset-bottom))}
+.jp-show-lines{display:flex;flex-direction:column;gap:18px;min-height:100%;justify-content:center;text-align:center}
+.jp-show-lines.is-many{justify-content:flex-start;gap:6px}
+.jp-show-line{padding-bottom:18px;border-bottom:1px solid #e1eaea}.jp-show-line:last-child{border-bottom:0}
+.jp-show .jp-chunk-ja{font-size:34px;line-height:1.85;font-weight:700;white-space:normal}.jp-show .jp-chunk-ja rt{font-size:13px}
+.jp-show .is-many .jp-chunk-ja{font-size:25px;line-height:1.9}.jp-show .is-many .jp-chunk-ja rt{font-size:11px}
+.jp-show .jp-chunk-ro{font-size:16px}.jp-show .jp-zh{font-size:15px}
 .jp-toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;width:max-content;max-width:calc(100vw - 32px);padding:10px 16px;border-radius:12px;background:#193f43;color:#fff;font-size:14px;line-height:1.5;box-shadow:0 6px 20px #0003}
-@media(max-width:640px){.jp-ja{font-size:22px}.jp-ja-show{font-size:30px}.is-many .jp-ja-show{font-size:23px}.jp-settings{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.jp-chunk-ja{font-size:22px}.jp-line{column-gap:10px}.jp-show .jp-chunk-ja{font-size:30px}.jp-show .is-many .jp-chunk-ja{font-size:23px}}

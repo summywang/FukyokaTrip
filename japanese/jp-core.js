@@ -15,9 +15,16 @@
   return parts;
  }
  const rubyHtml=text=>parseRuby(text).map(part=>part.ruby?`<ruby>${esc(part.base)}<rt>${esc(part.ruby)}</rt></ruby>`:esc(part.base)).join('');
- const plainText=text=>parseRuby(text).map(part=>part.base).join('');
+ // Word groups: a space in `ja`, " / " in `ro`. Spaces are layout only and never part of the Japanese text.
+ const plainText=text=>parseRuby(text).map(part=>part.base).join('').replace(/ /g,'');
+ const romajiText=ro=>String(ro??'').split(' / ').join(' ');
+ function chunks(line){
+  const ja=String(line.ja??'').split(' ').filter(Boolean),ro=String(line.ro??'').split(' / ');
+  if(ja.length!==ro.length)return [{ja:ja.join(''),ro:romajiText(line.ro)}];
+  return ja.map((text,i)=>({ja:text,ro:ro[i]}));
+ }
  // Speech uses the written kanji, except counted words ("5人", "4泊") where engines often pick the wrong reading.
- const speechText=text=>parseRuby(text).map(part=>part.ruby&&/\d/.test(part.base)?part.ruby:part.base).join('').replace(/○+/g,'');
+ const speechText=text=>parseRuby(text).map(part=>part.ruby&&/\d/.test(part.base)?part.ruby:part.base).join('').replace(/ /g,'').replace(/○+/g,'');
 
  // Which cards a slot needs, matched on the slot's current title so edits and the A/B switch follow along.
  const TAIWAN=/台灣/;
@@ -94,7 +101,7 @@
  function dietLines(diet,raw){
   const settings=normalizeSettings(raw),lines=[diet.opening];
   const count=diet.who.counts[settings.vegCount];
-  lines.push(count?{ja:`{私|わたし}たちのうち、${count[0]}はベジタリアンです。`,ro:`Watashitachi no uchi, ${count[1]} wa bejitarian desu.`,zh:`我們之中有 ${settings.vegCount} 位素食者。`}:diet.who.unset);
+  lines.push(count?{ja:`{私|わたし}たちの うち、 ${count[0]}は ベジタリアンです。`,ro:`Watashitachi no / uchi, / ${count[1]} wa / bejitarian desu.`,zh:`我們之中有 ${settings.vegCount} 位素食者。`}:diet.who.unset);
   lines.push(...diet.core);
   if(settings.egg!=='unset')lines.push(diet.egg[settings.egg]);
   if(settings.dairy!=='unset')lines.push(diet.dairy[settings.dairy]);
@@ -102,6 +109,10 @@
   lines.push(...diet.closing);
   return lines;
  }
+
+ // What each phrase shows besides the Japanese itself. Everything is on unless turned off.
+ const DISPLAY_KEYS=['furigana','romaji','chinese'];
+ function normalizeDisplay(raw){const source=raw&&typeof raw==='object'?raw:{};return Object.fromEntries(DISPLAY_KEYS.map(key=>[key,source[key]!==false]))}
 
  const TAGS={no:{cls:'no',label:'不行'},ask:{cls:'ask',label:'要問'},ok:{cls:'ok',label:'通常可以'}};
  function tagFor(tag,raw){
@@ -141,7 +152,7 @@
   return {dayIndex:moment.dayIndex,current,next};
  }
 
- const api={esc,parseRuby,rubyHtml,plainText,speechText,scenariosForSlot,isMergedChild,usage,usageLabel,orderedScenarios,normalizeSettings,dietLines,tagFor,tripMoment,slotRange,nowAndNext,SETTING_VALUES};
+ const api={esc,parseRuby,rubyHtml,plainText,romajiText,chunks,speechText,normalizeDisplay,DISPLAY_KEYS,scenariosForSlot,isMergedChild,usage,usageLabel,orderedScenarios,normalizeSettings,dietLines,tagFor,tripMoment,slotRange,nowAndNext,SETTING_VALUES};
  if(typeof module==='object'&&module.exports)module.exports=api;
  root.JPCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

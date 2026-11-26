@@ -6,7 +6,7 @@ const chips=(slot,date)=>J.scenariosForSlot({title:slot.title,time:slot.time,kin
 const allLines=()=>{const lines=[];const visit=line=>{lines.push(line);for(const reply of line.reply||[])visit(reply)};
  for(const scenario of P.scenarios)for(const section of scenario.sections)for(const item of section.items||[])visit(item);
  const d=P.diet;[d.opening,d.who.unset,...d.core,...Object.values(d.egg),...Object.values(d.dairy),...Object.values(d.shared),...d.closing].forEach(visit);
- for(const [ruby] of Object.values(d.who.counts))lines.push({ja:ruby,ro:'x',zh:'x'});
+ for(const count of ['1','2','3','4','5'])lines.push(J.dietLines(d,{vegCount:count})[1]);
  return lines};
 
 test('every line has Japanese, romaji and Chinese, and every kanji carries furigana',()=>{
@@ -21,11 +21,28 @@ test('every line has Japanese, romaji and Chinese, and every kanji carries furig
  }
 });
 
+test('romaji lines up with each Japanese word group',()=>{
+ for(const line of allLines()){
+  const ja=line.ja.split(' '),ro=line.ro.split(' / ');
+  assert(ja.every(Boolean),`empty word group: ${line.ja}`);
+  assert.equal(ja.length,ro.length,`word groups do not match: ${line.ja} | ${line.ro}`);
+  assert(!/  |^ | $/.test(line.ja),`stray spaces: ${line.ja}`);
+ }
+ assert.deepEqual(J.chunks({ja:'{大人|おとな} {5人|ごにん}と',ro:'Otona / gonin to'}),[{ja:'{大人|おとな}',ro:'Otona'},{ja:'{5人|ごにん}と',ro:'gonin to'}]);
+ assert.deepEqual(J.chunks({ja:'あ い',ro:'a i'}),[{ja:'あい',ro:'a i'}]);
+ assert.equal(J.romajiText('Otona / gonin to'),'Otona gonin to');
+});
+
+test('display settings default to showing furigana, romaji and Chinese',()=>{
+ assert.deepEqual(J.normalizeDisplay(null),{furigana:true,romaji:true,chinese:true});
+ assert.deepEqual(J.normalizeDisplay({romaji:false,chinese:'no'}),{furigana:true,romaji:false,chinese:true});
+});
+
 test('ruby renders as escaped <ruby> markup and speech reads counted words by their reading',()=>{
  assert.equal(J.rubyHtml('{肉|にく}<b>'),'<ruby>肉<rt>にく</rt></ruby>&lt;b&gt;');
- assert.equal(J.plainText('{大人|おとな}{5人|ごにん}です'),'大人5人です');
- assert.equal(J.speechText('{大人|おとな}{5人|ごにん}と{赤|あか}ちゃん{1人|ひとり}'),'大人ごにんと赤ちゃんひとり');
- assert.equal(J.speechText('{予約|よやく}した○○です'),'予約したです');
+ assert.equal(J.plainText('{大人|おとな} {5人|ごにん}です'),'大人5人です');
+ assert.equal(J.speechText('{大人|おとな} {5人|ごにん}と {赤|あか}ちゃん {1人|ひとり}'),'大人ごにんと赤ちゃんひとり');
+ assert.equal(J.speechText('{予約|よやく}した ○○です'),'予約したです');
 });
 
 test('scenario data is complete and each card has a unique id, chip and mark',()=>{
