@@ -15,6 +15,13 @@
   return parts;
  }
  const rubyHtml=text=>parseRuby(text).map(part=>part.ruby?`<ruby>${esc(part.base)}<rt>${esc(part.ruby)}</rt></ruby>`:esc(part.base)).join('');
+ // Furigana as stacked boxes rather than <ruby>: iPhone Safari adds depth under ruby words, which pushes their
+ // romaji lower than the neighbours'. Same approach as the user's lyric notebook.
+ const furiHtml=text=>parseRuby(text).map(part=>part.ruby?`<span class="furi"><span class="furi-rt">${esc(part.ruby)}</span>${esc(part.base)}</span>`:esc(part.base)).join('');
+ // A word group's note is filed under its plain text without trailing punctuation: "{予約|よやく}した、" -> "予約した".
+ const TRAIL=/[。、？！・]+$/;
+ const wordKey=text=>plainText(text).replace(TRAIL,'');
+ const wordReading=text=>parseRuby(text).map(part=>part.ruby||part.base).join('').replace(/ /g,'').replace(TRAIL,'');
  // Word groups: a space in `ja`, " / " in `ro`. Spaces are layout only and never part of the Japanese text.
  const plainText=text=>parseRuby(text).map(part=>part.base).join('').replace(/ /g,'');
  const romajiText=ro=>String(ro??'').split(' / ').join(' ');
@@ -152,7 +159,7 @@
   return {dayIndex:moment.dayIndex,current,next};
  }
 
- const api={esc,parseRuby,rubyHtml,plainText,romajiText,chunks,speechText,normalizeDisplay,DISPLAY_KEYS,scenariosForSlot,isMergedChild,usage,usageLabel,orderedScenarios,normalizeSettings,dietLines,tagFor,tripMoment,slotRange,nowAndNext,SETTING_VALUES};
+ const api={esc,parseRuby,rubyHtml,furiHtml,wordKey,wordReading,plainText,romajiText,chunks,speechText,normalizeDisplay,DISPLAY_KEYS,scenariosForSlot,isMergedChild,usage,usageLabel,orderedScenarios,normalizeSettings,dietLines,tagFor,tripMoment,slotRange,nowAndNext,SETTING_VALUES};
  if(typeof module==='object'&&module.exports)module.exports=api;
  root.JPCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

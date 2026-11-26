@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-const C=require('../trip-core.js'),J=require('../japanese/jp-core.js'),P=require('../japanese/phrases.js');
+const C=require('../trip-core.js'),J=require('../japanese/jp-core.js'),P=require('../japanese/phrases.js'),W=require('../japanese/words.js');
 const sandbox={};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../trip-data.js'),'utf8'),sandbox);const DATA=JSON.parse(JSON.stringify(sandbox.TRIP_DATA));
 const fresh=()=>{const state=C.initial(DATA);C.initializeFlights(state);return state};
 const chips=(slot,date)=>J.scenariosForSlot({title:slot.title,time:slot.time,kind:C.slotKind(slot),date});
@@ -119,4 +119,32 @@ test('in-trip view finds the current and next slot in Japan time and nothing out
  const evening=J.nowAndNext(state.days,new Date('2027-02-07T17:00:00+09:00'),DATA.mergedSlots);
  assert.equal(evening.current.title,'入住YUNOA 由布院');
  assert.equal(J.tripMoment('2027-02-04T15:30:00Z').dayIndex,0);
+});
+
+test('every word group has a tap note whose parts and readings match the phrase and its furigana',()=>{
+ const toHira=s=>s.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)).replace(/[・（）()、。？！\s]/g,'');
+ const jargon=/使役|て形|テ形|連用形|終止形|可能形|命令形|受身|被動式|敬語|謙讓語|謙譲語|尊敬語|丁寧語|助詞|助動詞|補助動詞|格助詞|名詞化|副詞|形容動詞|活用/;
+ const used=new Set();
+ for(const line of allLines())for(const chunk of J.chunks(line)){
+  const key=J.wordKey(chunk.ja),note=W[key];used.add(key);
+  assert(note,`no tap note for ${key}`);
+  assert(typeof note.m==='string'&&note.m.trim(),`no meaning for ${key}`);
+  assert(!jargon.test(note.m+(note.g||'')),`grammar jargon in ${key}`);
+  if(note.tag!==undefined)assert(['慣用語','口語','方言'].includes(note.tag),`tag of ${key}`);
+  if(note.g!==undefined)assert(note.g.includes('＝'),`pattern of ${key}`);
+  if(note.b){
+   assert(note.b.length>1,`parts of ${key}`);
+   assert.equal(note.b.map(p=>p[0]).join(''),key);
+   for(const [w,r,x] of note.b){assert(x.trim()&&!jargon.test(x),`part ${w} of ${key}`);if(/\p{Script=Han}/u.test(w))assert(/^[\p{Script=Hiragana}ー]+$/u.test(r),`reading of ${w} in ${key}`)}
+   assert.equal(toHira(note.b.map(([w,r])=>r||w).join('')),toHira(J.wordReading(chunk.ja)),`readings of ${key} must match the furigana`);
+  }
+ }
+ for(const key of Object.keys(W))assert(used.has(key),`unused note ${key}`);
+});
+
+test('furigana renders as stacked boxes and word keys drop trailing punctuation',()=>{
+ assert.equal(J.furiHtml('{肉|にく}<b>'),'<span class="furi"><span class="furi-rt">にく</span>肉</span>&lt;b&gt;');
+ assert.equal(J.wordKey('{予約|よやく}した、'),'予約した');
+ assert.equal(J.wordKey('{入口|いりぐち}・'),'入口');
+ assert.equal(J.wordReading('{入口|いりぐち}・'),'いりぐち');
 });

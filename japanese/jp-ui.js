@@ -2,7 +2,7 @@
    Used by the itinerary detail page (chips) and by japanese/index.html (card list). */
 (() => {
  'use strict';
- const P=globalThis.JP_PHRASES,J=globalThis.JPCore;
+ const P=globalThis.JP_PHRASES,J=globalThis.JPCore,WORDS=globalThis.JP_WORDS||{};
  if(!P||!J)return;
  const {esc,rubyHtml}=J;
  const SETTINGS_KEY='kyushu-2027-japanese-v1',DISPLAY_KEY='kyushu-2027-japanese-display-v1';
@@ -25,7 +25,8 @@
 <dialog id="jp-sheet" class="bottom-sheet jp-sheet" aria-labelledby="jp-sheet-title"><div class="sheet-header"><div class="sheet-handle" aria-hidden="true"></div><div class="dialog-head"><h2 id="jp-sheet-title"></h2><div class="jp-head-actions">${gearButton}<button type="button" class="sheet-close" data-jp-close="jp-sheet" aria-label="關閉日文卡">${ICON.close}</button></div></div></div><div id="jp-sheet-body" class="sheet-body jp-sheet-body"></div></dialog>
 <dialog id="jp-show" class="jp-show" aria-label="放大給對方看"><div class="jp-show-bar"><button type="button" class="jp-tool jp-show-play" data-jp-show-play>${ICON.play}<span>播放</span></button><div class="jp-head-actions">${gearButton}<button type="button" class="sheet-close" data-jp-close="jp-show" aria-label="關閉放大畫面">${ICON.close}</button></div></div><div id="jp-show-body" class="jp-show-body"></div></dialog>
 <dialog id="jp-display" class="bottom-sheet jp-display-sheet" aria-labelledby="jp-display-title"><div class="sheet-header"><div class="sheet-handle" aria-hidden="true"></div><div class="dialog-head"><h2 id="jp-display-title">顯示設定</h2><button type="button" class="sheet-close" data-jp-close="jp-display" aria-label="關閉顯示設定">${ICON.close}</button></div></div><div id="jp-display-body" class="sheet-body"></div></dialog>
-<div id="jp-toast" class="jp-toast" role="status" hidden></div>`);
+<div id="jp-toast" class="jp-toast" role="status" hidden></div>
+<div id="jp-tip" class="jp-tip" role="tooltip" hidden><span class="tip-head"><span class="tip-k" id="jp-tip-k" lang="ja"></span><span class="tip-tag" id="jp-tip-tag"></span></span><span class="tip-m" id="jp-tip-m"></span><dl class="tip-parts" id="jp-tip-parts" hidden></dl><p class="tip-g" id="jp-tip-g" hidden><b>句型</b><span id="jp-tip-g-text"></span></p></div>`);
  const $=id=>document.getElementById(id);
 
  // Modal dialogs sit in the top layer, so the toast moves into the last open one to stay visible.
@@ -54,8 +55,13 @@
  function tools(index,{show=true}={}){
   return `<div class="jp-tools"><button type="button" class="jp-tool" data-jp-say="${index}">${ICON.play}<span>播放</span></button><button type="button" class="jp-tool" data-jp-say="${index}" data-slow>${ICON.slow}<span>慢速</span></button>${show?`<button type="button" class="jp-tool" data-jp-show="${index}">${ICON.show}<span>放大</span></button>`:''}</div>`;
  }
- // Furigana above, romaji under each word group, Chinese centred below.
- const lineHtml=line=>`<span class="jp-line" lang="ja">${J.chunks(line).map(chunk=>`<span class="jp-chunk"><span class="jp-chunk-ja">${rubyHtml(chunk.ja)}</span><span class="jp-chunk-ro" lang="ja-Latn">${esc(chunk.ro)}</span></span>`).join('')}</span><span class="jp-zh">${esc(line.zh)}</span>`;
+ // Furigana above, romaji under each word group, Chinese centred below. Word groups with a note can be tapped.
+ function chunkHtml(chunk,tappable){
+  const key=J.wordKey(chunk.ja),note=tappable&&WORDS[key];
+  const attrs=note?` class="jp-chunk w" role="button" tabindex="0" data-jp-word="${esc(key)}" data-jp-say-text="${esc(J.speechText(chunk.ja))}" data-jp-reading="${esc(J.wordReading(chunk.ja))}"`:' class="jp-chunk"';
+  return `<span${attrs}><span class="jp-chunk-ja">${J.furiHtml(chunk.ja)}</span><span class="jp-chunk-ro" lang="ja-Latn">${esc(chunk.ro)}</span></span>`;
+ }
+ const lineHtml=(line,{tappable=true}={})=>`<span class="jp-line" lang="ja">${J.chunks(line).map(chunk=>chunkHtml(chunk,tappable)).join('')}</span><span class="jp-zh">${esc(line.zh)}</span>`;
  function phrase(item){
   const index=remember([item]);
   const replies=item.reply?.length?`<div class="jp-replies"><p class="jp-reply-label">可以這樣回</p>${item.reply.map(reply=>`<div class="jp-phrase jp-reply">${lineHtml(reply)}${tools(remember([reply]))}</div>`).join('')}</div>`:'';
@@ -102,12 +108,13 @@
  }
  function rerender(){
   if(!openId||!$('jp-sheet').open)return;
+  hideTip();
   const body=$('jp-sheet-body'),top=body.scrollTop;
   body.innerHTML=scenarioHtml(byId[openId]);body.scrollTop=top;
  }
  function show(lines){
   showLines=lines;
-  $('jp-show-body').innerHTML=`<div class="jp-show-lines${lines.length>1?' is-many':''}">${lines.map(line=>`<div class="jp-show-line">${lineHtml(line)}</div>`).join('')}</div>`;
+  $('jp-show-body').innerHTML=`<div class="jp-show-lines${lines.length>1?' is-many':''}">${lines.map(line=>`<div class="jp-show-line">${lineHtml(line,{tappable:false})}</div>`).join('')}</div>`;
   track($('jp-show'));
   $('jp-show-body').scrollTop=0;
  }
@@ -119,10 +126,64 @@
  ];
  const SAMPLE={ja:'{大人|おとな} {5人|ごにん}と {赤|あか}ちゃん {1人|ひとり}です。',ro:'Otona / gonin to / akachan / hitori desu.',zh:'五位大人和一個寶寶。'};
  function renderDisplay(){
-  $('jp-display-body').innerHTML=`<div class="jp-phrase jp-display-sample" aria-label="預覽">${lineHtml(SAMPLE)}</div><div class="jp-switches">${DISPLAY_ROWS.map(row=>`<div class="jp-switch-row"><span class="jp-switch-icon" aria-hidden="true">${row.icon}</span><span class="jp-switch-copy"><span class="jp-switch-label" id="jp-switch-${row.key}">${esc(row.label)}</span><span class="jp-switch-hint">${esc(row.hint)}</span></span><button type="button" class="jp-switch" role="switch" aria-checked="${display[row.key]}" aria-labelledby="jp-switch-${row.key}" data-jp-display="${row.key}"><span></span></button></div>`).join('')}</div><p class="jp-hint">日文本身一定會顯示。設定只存在這支手機，也套用在「放大給對方看」。</p>`;
+  $('jp-display-body').innerHTML=`<div class="jp-phrase jp-display-sample" aria-label="預覽">${lineHtml(SAMPLE,{tappable:false})}</div><div class="jp-switches">${DISPLAY_ROWS.map(row=>`<div class="jp-switch-row"><span class="jp-switch-icon" aria-hidden="true">${row.icon}</span><span class="jp-switch-copy"><span class="jp-switch-label" id="jp-switch-${row.key}">${esc(row.label)}</span><span class="jp-switch-hint">${esc(row.hint)}</span></span><button type="button" class="jp-switch" role="switch" aria-checked="${display[row.key]}" aria-labelledby="jp-switch-${row.key}" data-jp-display="${row.key}"><span></span></button></div>`).join('')}</div><p class="jp-hint">日文本身一定會顯示。設定只存在這支手機，也套用在「放大給對方看」。</p>`;
  }
 
+ // Tapping a word group: it lights up, is read aloud, and a tip lists its reading, meaning, parts and pattern.
+ let tipFor=null;
+ function tapWord(el){
+  const note=WORDS[el.dataset.jpWord];if(!note)return;
+  document.querySelectorAll('.w.sel').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel');
+  speak([{ja:el.dataset.jpSayText}]);
+  $('jp-tip-k').textContent=el.dataset.jpReading;
+  $('jp-tip-tag').textContent=note.tag||'';$('jp-tip-tag').hidden=!note.tag;
+  $('jp-tip-m').textContent=note.m||'';
+  const parts=$('jp-tip-parts');parts.replaceChildren();
+  if(Array.isArray(note.b)&&note.b.length>1)for(const [w,k,m] of note.b){
+   const dt=document.createElement('dt');dt.lang='ja';dt.textContent=w;
+   if(k){const small=document.createElement('small');small.textContent=k;dt.append(small)}
+   const dd=document.createElement('dd');dd.textContent=m;parts.append(dt,dd);
+  }
+  parts.hidden=!parts.childElementCount;
+  $('jp-tip-g-text').textContent=note.g||'';$('jp-tip-g').hidden=!note.g;
+  const host=el.closest('dialog')||document.body,tip=$('jp-tip');
+  if(tip.parentNode!==host)host.appendChild(tip);
+  tip.hidden=false;tipFor=el;placeTip();
+ }
+ // The tip sits inside the dialog that holds the word (dialogs are in the top layer) and follows it while the card scrolls.
+ function placeTip(){
+  const tip=$('jp-tip');
+  if(tip.hidden||!tipFor||!tipFor.isConnected){hideTip();return}
+  const host=tip.parentNode,box=host===document.body?{left:0,top:0,right:innerWidth,bottom:innerHeight}:host.getBoundingClientRect();
+  const r=tipFor.getBoundingClientRect(),bar=host.querySelector?.('.sheet-header,.jp-show-bar,.page-bar');
+  const ceil=(bar?bar.getBoundingClientRect().bottom:box.top)+8,floor=box.bottom-8;
+  if(r.bottom<ceil-8||r.top>floor){hideTip();return}
+  const tw=tip.offsetWidth,th=tip.offsetHeight,width=box.right-box.left;
+  const left=Math.max(12,Math.min(width-tw-12,r.left-box.left+r.width/2-tw/2));
+  let top=r.top-th-10;const below=top<ceil&&floor-r.bottom>r.top-ceil;
+  if(below)top=r.bottom+10;
+  tip.style.left=left+'px';tip.style.top=(top-box.top)+'px';
+  tip.style.setProperty('--ax',(r.left-box.left+r.width/2-left)+'px');
+  tip.classList.toggle('below',below);
+ }
+ function hideTip(){
+  $('jp-tip').hidden=true;tipFor=null;
+  document.querySelectorAll('.w.sel').forEach(x=>x.classList.remove('sel'));
+ }
+ document.addEventListener('pointerdown',event=>{if(!$('jp-tip').hidden&&!event.target.closest('.w,#jp-tip'))hideTip()});
+ document.addEventListener('scroll',placeTip,{capture:true,passive:true});
+ addEventListener('resize',placeTip);
+ document.addEventListener('keydown',event=>{
+  if(event.key==='Enter'||event.key===' '){const w=event.target.closest?.('.w');if(w){event.preventDefault();tapWord(w)}}
+ });
+ // Esc closes the tip first, then the card on the next press.
+ document.addEventListener('cancel',event=>{if(!$('jp-tip').hidden){event.preventDefault();hideTip()}},true);
+ document.addEventListener('close',hideTip,true);
+
  document.addEventListener('click',event=>{
+  const word=event.target.closest('.w[data-jp-word]');
+  if(word){tapWord(word);return}
   const target=event.target.closest('[data-jp-open],[data-jp-say],[data-jp-show],[data-jp-show-play],[data-jp-close],[data-jp-display-open],[data-jp-display]');
   if(!target)return;
   if(target.dataset.jpOpen){open(target.dataset.jpOpen);return}
